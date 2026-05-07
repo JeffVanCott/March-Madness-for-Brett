@@ -1,0 +1,1536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Henry Pearson&apos;s March Madness Bracket Challenge</title>
+  <style>
+    :root {
+      --bg: #f7efe2;
+      --paper: rgba(255, 250, 242, 0.92);
+      --card: #fffaf1;
+      --ink: #25170d;
+      --muted: #755847;
+      --line: rgba(92, 54, 22, 0.16);
+      --accent: #ef6c1a;
+      --accent-deep: #c44b00;
+      --accent-soft: rgba(239, 108, 26, 0.14);
+      --success: #2e8b57;
+      --warning: #9e4b11;
+      --danger: #9c2d2d;
+      --shadow: 0 18px 45px rgba(75, 40, 12, 0.12);
+      --radius-lg: 24px;
+      --radius-md: 18px;
+      --radius-sm: 12px;
+      --font-display: "Avenir Next Condensed", "Franklin Gothic Medium", "Arial Narrow", sans-serif;
+      --font-body: "Avenir Next", "Trebuchet MS", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: var(--font-body);
+      background:
+        radial-gradient(circle at top left, rgba(239, 108, 26, 0.22), transparent 22%),
+        radial-gradient(circle at top right, rgba(176, 95, 39, 0.18), transparent 20%),
+        linear-gradient(180deg, #fff7ed 0%, #f7efe2 34%, #f2e4d0 100%);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(rgba(139, 80, 26, 0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(139, 80, 26, 0.045) 1px, transparent 1px);
+      background-size: 32px 32px;
+      mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.45), transparent 85%);
+    }
+
+    .app-shell {
+      width: min(1200px, calc(100vw - 24px));
+      margin: 0 auto;
+      padding: 20px 0 48px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 28px;
+      border-radius: 30px;
+      background:
+        linear-gradient(140deg, rgba(44, 21, 6, 0.96), rgba(83, 41, 14, 0.9)),
+        linear-gradient(180deg, rgba(239, 108, 26, 0.12), transparent);
+      color: #fff5ea;
+      box-shadow: var(--shadow);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -60px;
+      top: -60px;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at center, rgba(255, 190, 120, 0.42), rgba(239, 108, 26, 0.08) 55%, transparent 56%);
+      opacity: 0.9;
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      font-size: 0.82rem;
+      color: #ffd4b0;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 12ch;
+      font-family: var(--font-display);
+      font-size: clamp(2.4rem, 6vw, 4.8rem);
+      line-height: 0.95;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .hero p {
+      max-width: 64ch;
+      margin: 14px 0 0;
+      font-size: 1rem;
+      line-height: 1.6;
+      color: rgba(255, 243, 228, 0.88);
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.7fr 1fr;
+      gap: 18px;
+      align-items: end;
+    }
+
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .stat-card {
+      padding: 16px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(4px);
+    }
+
+    .stat-card strong {
+      display: block;
+      font-size: 1.6rem;
+      font-family: var(--font-display);
+    }
+
+    .stat-card span {
+      display: block;
+      margin-top: 4px;
+      font-size: 0.92rem;
+      color: rgba(255, 243, 228, 0.78);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 20px;
+      margin-top: 20px;
+      align-items: start;
+    }
+
+    .stack {
+      display: grid;
+      gap: 20px;
+    }
+
+    .panel {
+      padding: 22px;
+      border-radius: var(--radius-lg);
+      background: var(--paper);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+    }
+
+    .panel h2,
+    .panel h3 {
+      margin: 0;
+      font-family: var(--font-display);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: baseline;
+      margin-bottom: 14px;
+    }
+
+    .panel-head p,
+    .hint,
+    .subtle {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .progress {
+      display: grid;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .progress-bar {
+      overflow: hidden;
+      height: 14px;
+      border-radius: 999px;
+      background: rgba(91, 55, 26, 0.1);
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent), #ffb15a);
+      transition: width 180ms ease;
+    }
+
+    .bucket-list {
+      display: grid;
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .bucket {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.68);
+    }
+
+    .bucket.locked {
+      opacity: 0.52;
+    }
+
+    .bucket-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .bucket-title {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .step-badge,
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 7px 11px;
+      border-radius: 999px;
+      font-size: 0.84rem;
+      font-weight: 700;
+    }
+
+    .step-badge {
+      background: rgba(37, 23, 13, 0.08);
+      color: var(--ink);
+    }
+
+    .pill {
+      background: var(--accent-soft);
+      color: var(--accent-deep);
+    }
+
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+
+    .team-card {
+      width: 100%;
+      text-align: left;
+      padding: 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(104, 60, 27, 0.14);
+      background: #fff;
+      color: var(--ink);
+      cursor: pointer;
+      transition: transform 150ms ease, border-color 150ms ease, box-shadow 150ms ease, background 150ms ease;
+    }
+
+    .team-card:hover,
+    .team-card:focus-visible {
+      transform: translateY(-2px);
+      border-color: rgba(239, 108, 26, 0.44);
+      box-shadow: 0 10px 24px rgba(159, 83, 21, 0.12);
+      outline: none;
+    }
+
+    .team-card.selected {
+      border-color: var(--accent);
+      background: linear-gradient(180deg, rgba(255, 181, 115, 0.35), rgba(255, 246, 236, 0.95));
+      box-shadow: 0 12px 28px rgba(205, 96, 0, 0.18);
+    }
+
+    .team-card:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .team-name {
+      display: block;
+      font-weight: 800;
+      font-size: 1rem;
+    }
+
+    .team-meta {
+      display: block;
+      margin-top: 8px;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 16px;
+      display: grid;
+      gap: 20px;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .summary-card {
+      padding: 14px;
+      border-radius: 18px;
+      background: #fff;
+      border: 1px solid var(--line);
+    }
+
+    .summary-card strong {
+      display: block;
+      font-size: 1.4rem;
+      font-family: var(--font-display);
+    }
+
+    .pick-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .pick-card {
+      padding: 14px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: #fff;
+      display: grid;
+      gap: 10px;
+    }
+
+    .pick-card-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .pick-card-top button {
+      border: 0;
+      border-radius: 999px;
+      background: rgba(156, 45, 45, 0.08);
+      color: var(--danger);
+      padding: 7px 10px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .score-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .score-row label {
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+
+    select {
+      width: 100%;
+      border-radius: 14px;
+      border: 1px solid rgba(104, 60, 27, 0.18);
+      padding: 10px 12px;
+      font: inherit;
+      color: var(--ink);
+      background: #fff;
+    }
+
+    .score-pill {
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(46, 139, 87, 0.1);
+      color: var(--success);
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .balance-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .balance-card {
+      padding: 16px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .balance-card strong {
+      display: block;
+      font-size: 1.9rem;
+      font-family: var(--font-display);
+    }
+
+    .alert {
+      margin-top: 14px;
+      padding: 14px 16px;
+      border-radius: 16px;
+      border: 1px solid rgba(158, 75, 17, 0.18);
+      background: rgba(255, 191, 115, 0.18);
+      color: var(--warning);
+    }
+
+    .alert.good {
+      border-color: rgba(46, 139, 87, 0.18);
+      background: rgba(84, 194, 138, 0.12);
+      color: var(--success);
+    }
+
+    .region-distribution {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .region-chip {
+      padding: 12px;
+      border-radius: 16px;
+      background: #fff;
+      border: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .bracket-layout {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-areas:
+        "south midwest"
+        "west east";
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .region-card {
+      padding: 16px;
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 248, 238, 0.96));
+      border: 1px solid var(--line);
+    }
+
+    .region-card[data-region="South"] { grid-area: south; }
+    .region-card[data-region="West"] { grid-area: west; }
+    .region-card[data-region="Midwest"] { grid-area: midwest; }
+    .region-card[data-region="East"] { grid-area: east; }
+
+    .region-card h3 {
+      margin-bottom: 12px;
+      font-size: 1.1rem;
+    }
+
+    .seed-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .seed-entry {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 9px 10px;
+      border-radius: 14px;
+      background: rgba(113, 83, 54, 0.06);
+      font-size: 0.92rem;
+    }
+
+    .seed-entry.selected {
+      background: linear-gradient(90deg, rgba(239, 108, 26, 0.22), rgba(255, 222, 188, 0.65));
+      border: 1px solid rgba(239, 108, 26, 0.28);
+    }
+
+    .seed-number {
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(37, 23, 13, 0.08);
+      font-weight: 800;
+    }
+
+    .slot-side {
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+
+    .footer-note {
+      margin-top: 18px;
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .button {
+      border: 0;
+      border-radius: 999px;
+      padding: 12px 16px;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 800;
+    }
+
+    .button.primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .button.secondary {
+      background: rgba(37, 23, 13, 0.08);
+      color: var(--ink);
+    }
+
+    .empty-state {
+      padding: 16px;
+      border-radius: 18px;
+      border: 1px dashed rgba(104, 60, 27, 0.28);
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.52);
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .field label {
+      font-size: 0.9rem;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .text-input {
+      width: 100%;
+      border-radius: 14px;
+      border: 1px solid rgba(104, 60, 27, 0.18);
+      padding: 12px 14px;
+      font: inherit;
+      color: var(--ink);
+      background: #fff;
+    }
+
+    .standings-list,
+    .saved-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .standing-row,
+    .saved-row {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 14px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .standing-rank {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(239, 108, 26, 0.14);
+      color: var(--accent-deep);
+      font-weight: 800;
+    }
+
+    .standing-score {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      line-height: 1;
+    }
+
+    .saved-row button {
+      border: 0;
+      border-radius: 999px;
+      background: rgba(156, 45, 45, 0.08);
+      color: var(--danger);
+      padding: 8px 12px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .round-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(210px, 1fr));
+      gap: 14px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      margin-top: 18px;
+    }
+
+    .round-column {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+      min-width: 210px;
+    }
+
+    .round-column h3 {
+      font-size: 1rem;
+    }
+
+    .game-card {
+      padding: 14px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: #fff;
+      display: grid;
+      gap: 10px;
+    }
+
+    .game-meta {
+      font-size: 0.82rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .locked-note {
+      font-size: 0.84rem;
+      color: var(--muted);
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(113, 83, 54, 0.07);
+    }
+
+    @media (max-width: 980px) {
+      .hero-grid,
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: static;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .app-shell {
+        width: min(100vw - 16px, 100%);
+        padding-top: 8px;
+      }
+
+      .hero,
+      .panel {
+        padding: 18px;
+      }
+
+      .hero-stats,
+      .summary-grid,
+      .balance-grid,
+      .region-distribution,
+      .bracket-layout {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "south"
+          "west"
+          "midwest"
+          "east";
+      }
+
+      .team-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .bucket-header,
+      .panel-head,
+      .pick-card-top,
+      .score-row {
+        grid-template-columns: 1fr;
+        display: grid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app-shell">
+    <section class="hero">
+      <div class="hero-grid">
+        <div>
+          <p class="eyebrow">2025-26 NCAA Men&apos;s Challenge</p>
+          <h1>Henry Pearson&apos;s March Madness Bracket Challenge</h1>
+          <p>
+            Draft 15 teams using your custom seed rules, then track their wins round by round.
+            The bracket view shows exactly where your teams land and warns you when your picks lean
+            too heavily to one side.
+          </p>
+        </div>
+        <div class="hero-stats">
+          <div class="stat-card">
+            <strong>15</strong>
+            <span>Total teams to draft</span>
+          </div>
+          <div class="stat-card">
+            <strong>1-12</strong>
+            <span>Custom round scoring</span>
+          </div>
+          <div class="stat-card">
+            <strong>4</strong>
+            <span>Regions mapped to the bracket</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="layout">
+      <div class="stack">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Draft Board</h2>
+              <p class="subtle">Complete each bucket before moving to the next one.</p>
+            </div>
+            <span class="pill" id="progressLabel">0 of 15 selected</span>
+          </div>
+
+          <div class="progress">
+            <div class="progress-bar" aria-hidden="true">
+              <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <p class="hint" id="nextStepHint">Start with your No. 1 seed.</p>
+          </div>
+
+          <div class="bucket-list" id="bucketList"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Game Results</h2>
+              <p class="subtle">Submit actual winners and the pool standings will update automatically.</p>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="button secondary" type="button" id="clearResults">Clear all results</button>
+          </div>
+          <div class="round-grid" id="resultsGrid"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Bracket Map</h2>
+              <p class="subtle">Selected teams glow so users can quickly spot clustering.</p>
+            </div>
+          </div>
+          <div class="bracket-layout" id="bracketLayout"></div>
+          <p class="footer-note">
+            Bracket data is based on the uploaded image. A few cropped labels were inferred from the image:
+            Purdue, Houston, Northern Colorado, and Eastern Kentucky.
+          </p>
+        </div>
+      </div>
+
+      <aside class="sidebar">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Current Entry</h2>
+              <p class="subtle">Build a 15-team group, then save it as one person&apos;s submission.</p>
+            </div>
+          </div>
+
+          <div class="summary-grid">
+            <div class="summary-card">
+              <strong id="selectedCount">0</strong>
+              <span class="subtle">Teams drafted</span>
+            </div>
+            <div class="summary-card">
+              <strong id="scoreTotal">0</strong>
+              <span class="subtle">Live points</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="entryName">Entrant name</label>
+            <input class="text-input" id="entryName" type="text" maxlength="60" placeholder="Example: Stephanie">
+          </div>
+
+          <div class="pick-list" id="pickList"></div>
+
+          <div class="actions">
+            <button class="button primary" type="button" id="saveEntry">Save this entry</button>
+            <button class="button secondary" type="button" id="resetDraft">Reset draft</button>
+          </div>
+
+          <div class="saved-list" id="savedEntries"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Standings</h2>
+              <p class="subtle">Scores update from the winners entered in the results section.</p>
+            </div>
+          </div>
+
+          <div class="standings-list" id="standingsList"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Bracket Balance</h2>
+              <p class="subtle">A quick visual check for one-sided drafting.</p>
+            </div>
+          </div>
+
+          <div class="balance-grid">
+            <div class="balance-card">
+              <strong id="leftCount">0</strong>
+              <span class="subtle">Left side picks</span>
+            </div>
+            <div class="balance-card">
+              <strong id="rightCount">0</strong>
+              <span class="subtle">Right side picks</span>
+            </div>
+          </div>
+
+          <div class="alert good" id="balanceAlert">Balanced start. Add picks to compare both sides.</div>
+
+          <div class="region-distribution" id="regionDistribution"></div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const scoringByWin = [1, 2, 4, 6, 8, 12];
+    const roundLabels = ["Round 1", "Round 2", "Sweet 16", "Elite 8", "Final Four", "Championship"];
+    const regionOrder = ["South", "West", "Midwest", "East"];
+    const storageKeys = {
+      entries: "march-madness-entries-v1",
+      results: "march-madness-results-v1"
+    };
+
+    const teams = [
+      { id: "south-1-purdue", team: "Purdue", seed: 1, region: "South", side: "Left" },
+      { id: "south-16-liu", team: "LIU/Little Rock", seed: 16, region: "South", side: "Left" },
+      { id: "south-8-creighton", team: "Creighton", seed: 8, region: "South", side: "Left" },
+      { id: "south-9-iowa-2", team: "Iowa", seed: 9, region: "South", side: "Left" },
+      { id: "south-5-louisville", team: "Louisville", seed: 5, region: "South", side: "Left" },
+      { id: "south-12-bradley", team: "Bradley", seed: 12, region: "South", side: "Left" },
+      { id: "south-4-ucla", team: "UCLA", seed: 4, region: "South", side: "Left" },
+      { id: "south-13-uncw", team: "UNC-Wilmington", seed: 13, region: "South", side: "Left" },
+      { id: "south-6-arkansas", team: "Arkansas", seed: 6, region: "South", side: "Left" },
+      { id: "south-11-boise-maryland", team: "Boise / Maryland", seed: 11, region: "South", side: "Left" },
+      { id: "south-3-stjohns", team: "St. John&apos;s", seed: 3, region: "South", side: "Left" },
+      { id: "south-14-high-point", team: "High Point", seed: 14, region: "South", side: "Left" },
+      { id: "south-7-oregon", team: "Oregon", seed: 7, region: "South", side: "Left" },
+      { id: "south-10-vcu", team: "VCU", seed: 10, region: "South", side: "Left" },
+      { id: "south-2-kentucky", team: "Kentucky", seed: 2, region: "South", side: "Left" },
+      { id: "south-15-iona", team: "Iona", seed: 15, region: "South", side: "Left" },
+
+      { id: "west-1-florida", team: "Florida", seed: 1, region: "West", side: "Left" },
+      { id: "west-16-vermont", team: "Vermont", seed: 16, region: "West", side: "Left" },
+      { id: "west-8-wisconsin", team: "Wisconsin", seed: 8, region: "West", side: "Left" },
+      { id: "west-9-north-carolina", team: "North Carolina", seed: 9, region: "West", side: "Left" },
+      { id: "west-5-illinois", team: "Illinois", seed: 5, region: "West", side: "Left" },
+      { id: "west-12-yale", team: "Yale", seed: 12, region: "West", side: "Left" },
+      { id: "west-4-byu", team: "BYU", seed: 4, region: "West", side: "Left" },
+      { id: "west-13-uc-irvine", team: "UC-Irvine", seed: 13, region: "West", side: "Left" },
+      { id: "west-6-auburn", team: "Auburn", seed: 6, region: "West", side: "Left" },
+      { id: "west-11-utah-state-indiana", team: "Utah St/Indiana", seed: 11, region: "West", side: "Left" },
+      { id: "west-3-gonzaga", team: "Gonzaga", seed: 3, region: "West", side: "Left" },
+      { id: "west-14-utah-valley", team: "Utah Valley", seed: 14, region: "West", side: "Left" },
+      { id: "west-7-missouri", team: "Missouri", seed: 7, region: "West", side: "Left" },
+      { id: "west-10-marquette", team: "Marquette", seed: 10, region: "West", side: "Left" },
+      { id: "west-2-michigan", team: "Michigan", seed: 2, region: "West", side: "Left" },
+      { id: "west-15-northern-colorado", team: "Northern Colorado", seed: 15, region: "West", side: "Left" },
+
+      { id: "midwest-1-houston", team: "Houston", seed: 1, region: "Midwest", side: "Right" },
+      { id: "midwest-16-colgate-southern", team: "Colgate/Southern", seed: 16, region: "Midwest", side: "Right" },
+      { id: "midwest-8-texas", team: "Texas", seed: 8, region: "Midwest", side: "Right" },
+      { id: "midwest-9-nc-state", team: "NC State", seed: 9, region: "Midwest", side: "Right" },
+      { id: "midwest-5-michigan-state", team: "Michigan State", seed: 5, region: "Midwest", side: "Right" },
+      { id: "midwest-12-liberty", team: "Liberty", seed: 12, region: "Midwest", side: "Right" },
+      { id: "midwest-4-texas-tech", team: "Texas Tech", seed: 4, region: "Midwest", side: "Right" },
+      { id: "midwest-13-troy", team: "Troy", seed: 13, region: "Midwest", side: "Right" },
+      { id: "midwest-6-baylor", team: "Baylor", seed: 6, region: "Midwest", side: "Right" },
+      { id: "midwest-11-memphis", team: "Memphis", seed: 11, region: "Midwest", side: "Right" },
+      { id: "midwest-3-alabama", team: "Alabama", seed: 3, region: "Midwest", side: "Right" },
+      { id: "midwest-14-mcneese-state", team: "McNeese State", seed: 14, region: "Midwest", side: "Right" },
+      { id: "midwest-7-mississippi-state", team: "Mississippi State", seed: 7, region: "Midwest", side: "Right" },
+      { id: "midwest-10-mississippi", team: "Mississippi", seed: 10, region: "Midwest", side: "Right" },
+      { id: "midwest-2-kansas", team: "Kansas", seed: 2, region: "Midwest", side: "Right" },
+      { id: "midwest-15-wright-state", team: "Wright State", seed: 15, region: "Midwest", side: "Right" },
+
+      { id: "east-1-duke", team: "Duke", seed: 1, region: "East", side: "Right" },
+      { id: "east-16-norfolk-state", team: "Norfolk State", seed: 16, region: "East", side: "Right" },
+      { id: "east-8-usc", team: "USC", seed: 8, region: "East", side: "Right" },
+      { id: "east-9-villanova", team: "Villanova", seed: 9, region: "East", side: "Right" },
+      { id: "east-5-iowa-state", team: "Iowa State", seed: 5, region: "East", side: "Right" },
+      { id: "east-12-akron", team: "Akron", seed: 12, region: "East", side: "Right" },
+      { id: "east-4-tennessee", team: "Tennessee", seed: 4, region: "East", side: "Right" },
+      { id: "east-13-chattanooga", team: "Chattanooga", seed: 13, region: "East", side: "Right" },
+      { id: "east-6-ohio-state", team: "Ohio State", seed: 6, region: "East", side: "Right" },
+      { id: "east-11-georgia", team: "Georgia", seed: 11, region: "East", side: "Right" },
+      { id: "east-3-arizona", team: "Arizona", seed: 3, region: "East", side: "Right" },
+      { id: "east-14-south-dakota-state", team: "So. Dakota State", seed: 14, region: "East", side: "Right" },
+      { id: "east-7-vanderbilt", team: "Vanderbilt", seed: 7, region: "East", side: "Right" },
+      { id: "east-10-san-diego-state", team: "San Diego State", seed: 10, region: "East", side: "Right" },
+      { id: "east-2-connecticut", team: "Connecticut", seed: 2, region: "East", side: "Right" },
+      { id: "east-15-eastern-kentucky", team: "Eastern Kentucky", seed: 15, region: "East", side: "Right" }
+    ];
+
+    const buckets = [
+      { id: "seed1", label: "One No. 1 Seed", description: "Choose exactly one top seed.", minSeed: 1, maxSeed: 1, required: 1 },
+      { id: "seed23", label: "Two No. 2-3 Seeds", description: "Pick two teams seeded 2 or 3.", minSeed: 2, maxSeed: 3, required: 2 },
+      { id: "seed47", label: "Three No. 4-7 Seeds", description: "Pick three teams seeded 4 through 7.", minSeed: 4, maxSeed: 7, required: 3 },
+      { id: "seed811", label: "Four No. 8-11 Seeds", description: "Pick four teams seeded 8 through 11.", minSeed: 8, maxSeed: 11, required: 4 },
+      { id: "seed1216", label: "Five No. 12-16 Seeds", description: "Pick five sleeper teams seeded 12 through 16.", minSeed: 12, maxSeed: 16, required: 5 }
+    ];
+
+    const teamMap = new Map(teams.map((team) => [team.id, team]));
+    const teamByRegionSeed = new Map(teams.map((team) => [`${team.region}-${team.seed}`, team.id]));
+    const firstRoundSeedPairs = [[1, 16], [8, 9], [5, 12], [4, 13], [6, 11], [3, 14], [7, 10], [2, 15]];
+
+    const games = buildGames();
+    const gamesByRound = roundLabels.map((_, roundIndex) => games.filter((game) => game.round === roundIndex));
+    const gameMap = new Map(games.map((game) => [game.id, game]));
+
+    const state = {
+      selected: [],
+      entrantName: "",
+      entries: loadFromStorage(storageKeys.entries, []),
+      results: loadFromStorage(storageKeys.results, {})
+    };
+
+    function loadFromStorage(key, fallback) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch (error) {
+        return fallback;
+      }
+    }
+
+    function persistState() {
+      localStorage.setItem(storageKeys.entries, JSON.stringify(state.entries));
+      localStorage.setItem(storageKeys.results, JSON.stringify(state.results));
+    }
+
+    function buildGames() {
+      const builtGames = [];
+
+      regionOrder.forEach((region) => {
+        firstRoundSeedPairs.forEach(([highSeed, lowSeed], index) => {
+          builtGames.push({
+            id: `${region.toLowerCase()}-r1-g${index + 1}`,
+            round: 0,
+            label: `${region} Game ${index + 1}`,
+            bracketLabel: `${highSeed} vs ${lowSeed}`,
+            region,
+            participants: [teamByRegionSeed.get(`${region}-${highSeed}`), teamByRegionSeed.get(`${region}-${lowSeed}`)]
+          });
+        });
+
+        for (let index = 0; index < 4; index += 1) {
+          builtGames.push({
+            id: `${region.toLowerCase()}-r2-g${index + 1}`,
+            round: 1,
+            label: `${region} Round 2`,
+            bracketLabel: `Winners of ${index * 2 + 1} and ${index * 2 + 2}`,
+            region,
+            from: [`${region.toLowerCase()}-r1-g${index * 2 + 1}`, `${region.toLowerCase()}-r1-g${index * 2 + 2}`]
+          });
+        }
+
+        for (let index = 0; index < 2; index += 1) {
+          builtGames.push({
+            id: `${region.toLowerCase()}-r3-g${index + 1}`,
+            round: 2,
+            label: `${region} Sweet 16`,
+            bracketLabel: `Round 2 winners`,
+            region,
+            from: [`${region.toLowerCase()}-r2-g${index * 2 + 1}`, `${region.toLowerCase()}-r2-g${index * 2 + 2}`]
+          });
+        }
+
+        builtGames.push({
+          id: `${region.toLowerCase()}-r4-g1`,
+          round: 3,
+          label: `${region} Elite 8`,
+          bracketLabel: `Sweet 16 winners`,
+          region,
+          from: [`${region.toLowerCase()}-r3-g1`, `${region.toLowerCase()}-r3-g2`]
+        });
+      });
+
+      builtGames.push({
+        id: "final-four-1",
+        round: 4,
+        label: "Final Four 1",
+        bracketLabel: "South vs Midwest",
+        from: ["south-r4-g1", "midwest-r4-g1"]
+      });
+
+      builtGames.push({
+        id: "final-four-2",
+        round: 4,
+        label: "Final Four 2",
+        bracketLabel: "West vs East",
+        from: ["west-r4-g1", "east-r4-g1"]
+      });
+
+      builtGames.push({
+        id: "championship",
+        round: 5,
+        label: "National Championship",
+        bracketLabel: "Final Four winners",
+        from: ["final-four-1", "final-four-2"]
+      });
+
+      return builtGames;
+    }
+
+    function getGameOptions(game, winnerMap) {
+      if (game.participants) {
+        return game.participants.map((id) => teamMap.get(id)).filter(Boolean);
+      }
+
+      if (!game.from) {
+        return [];
+      }
+
+      const sourceWinners = game.from.map((id) => winnerMap[id]).filter(Boolean);
+      if (sourceWinners.length !== game.from.length) {
+        return [];
+      }
+
+      return sourceWinners.map((id) => teamMap.get(id)).filter(Boolean);
+    }
+
+    function getWinnerMap() {
+      const winnerMap = {};
+      games.forEach((game) => {
+        const options = getGameOptions(game, winnerMap);
+        const selectedWinner = state.results[game.id];
+        if (options.some((team) => team.id === selectedWinner)) {
+          winnerMap[game.id] = selectedWinner;
+        }
+      });
+      return winnerMap;
+    }
+
+    function getTeamWinsMap() {
+      const winnerMap = getWinnerMap();
+      const wins = {};
+      Object.values(winnerMap).forEach((teamId) => {
+        wins[teamId] = (wins[teamId] || 0) + 1;
+      });
+      return wins;
+    }
+
+    function getBucketTeams(bucket) {
+      return teams
+        .filter((team) => team.seed >= bucket.minSeed && team.seed <= bucket.maxSeed)
+        .sort((a, b) => a.seed - b.seed || a.region.localeCompare(b.region) || a.team.localeCompare(b.team));
+    }
+
+    function getBucketCount(bucketId) {
+      return state.selected.filter((id) => teamMatchesBucket(teamMap.get(id), bucketId)).length;
+    }
+
+    function teamMatchesBucket(team, bucketId) {
+      const bucket = buckets.find((item) => item.id === bucketId);
+      return team.seed >= bucket.minSeed && team.seed <= bucket.maxSeed;
+    }
+
+    function activeBucketIndex() {
+      const nextIndex = buckets.findIndex((bucket) => getBucketCount(bucket.id) < bucket.required);
+      return nextIndex === -1 ? buckets.length - 1 : nextIndex;
+    }
+
+    function canSelectTeam(team) {
+      if (state.selected.includes(team.id)) {
+        return true;
+      }
+
+      const bucketIndex = buckets.findIndex((bucket) => teamMatchesBucket(team, bucket.id));
+      if (bucketIndex !== activeBucketIndex()) {
+        return false;
+      }
+
+      return getBucketCount(buckets[bucketIndex].id) < buckets[bucketIndex].required;
+    }
+
+    function toggleTeam(teamId) {
+      if (state.selected.includes(teamId)) {
+        removeTeam(teamId);
+        return;
+      }
+
+      const team = teamMap.get(teamId);
+      if (!canSelectTeam(team)) {
+        return;
+      }
+
+      state.selected.push(teamId);
+      render();
+    }
+
+    function removeTeam(teamId) {
+      state.selected = state.selected.filter((id) => id !== teamId);
+      render();
+    }
+
+    function calculateScore(teamIds, winsMap) {
+      return teamIds.reduce((sum, teamId) => {
+        const wins = winsMap[teamId] || 0;
+        return sum + scoringByWin.slice(0, wins).reduce((acc, points) => acc + points, 0);
+      }, 0);
+    }
+
+    function currentScore() {
+      return calculateScore(state.selected, getTeamWinsMap());
+    }
+
+    function saveEntry() {
+      const name = state.entrantName.trim();
+      if (!name) {
+        window.alert("Enter a name before saving this entry.");
+        return;
+      }
+
+      if (state.selected.length !== 15) {
+        window.alert("Finish all 15 picks before saving the entry.");
+        return;
+      }
+
+      const newEntry = {
+        id: crypto.randomUUID ? crypto.randomUUID() : `entry-${Date.now()}`,
+        name,
+        teams: [...state.selected]
+      };
+
+      state.entries.push(newEntry);
+      state.selected = [];
+      state.entrantName = "";
+      persistState();
+      render();
+    }
+
+    function deleteEntry(entryId) {
+      state.entries = state.entries.filter((entry) => entry.id !== entryId);
+      persistState();
+      renderSummary();
+    }
+
+    function updateResult(gameId, winnerId) {
+      if (!winnerId) {
+        delete state.results[gameId];
+      } else {
+        state.results[gameId] = winnerId;
+      }
+
+      const winnerMap = getWinnerMap();
+      games.forEach((game) => {
+        const options = getGameOptions(game, winnerMap);
+        if (state.results[game.id] && !options.some((team) => team.id === state.results[game.id])) {
+          delete state.results[game.id];
+        }
+      });
+
+      persistState();
+      renderSummary();
+    }
+
+    function clearResults() {
+      state.results = {};
+      persistState();
+      renderSummary();
+    }
+
+    function renderBuckets() {
+      const bucketList = document.getElementById("bucketList");
+      const currentIndex = activeBucketIndex();
+      bucketList.innerHTML = "";
+
+      buckets.forEach((bucket, index) => {
+        const bucketEl = document.createElement("section");
+        bucketEl.className = `bucket${index > currentIndex ? " locked" : ""}`;
+
+        const count = getBucketCount(bucket.id);
+        const done = count === bucket.required;
+
+        bucketEl.innerHTML = `
+          <div class="bucket-header">
+            <div class="bucket-title">
+              <span class="step-badge">Step ${index + 1}</span>
+              <div>
+                <strong>${bucket.label}</strong>
+                <div class="subtle">${bucket.description}</div>
+              </div>
+            </div>
+            <span class="pill">${count} / ${bucket.required}</span>
+          </div>
+          <div class="team-grid"></div>
+        `;
+
+        const teamGrid = bucketEl.querySelector(".team-grid");
+        getBucketTeams(bucket).forEach((team) => {
+          const isSelected = state.selected.includes(team.id);
+          const button = document.createElement("button");
+          const disabled = !isSelected && !canSelectTeam(team);
+          button.type = "button";
+          button.className = `team-card${isSelected ? " selected" : ""}`;
+          button.disabled = disabled;
+          button.setAttribute("aria-pressed", String(isSelected));
+          button.innerHTML = `
+            <span class="team-name">${team.team}</span>
+            <span class="team-meta">No. ${team.seed} • ${team.region} • ${team.side} side</span>
+          `;
+          button.addEventListener("click", () => toggleTeam(team.id));
+          teamGrid.appendChild(button);
+        });
+
+        if (done && index === currentIndex) {
+          bucketEl.classList.remove("locked");
+        }
+
+        bucketList.appendChild(bucketEl);
+      });
+    }
+
+    function renderSummary() {
+      const selectedTeams = state.selected.map((id) => teamMap.get(id));
+      const winsMap = getTeamWinsMap();
+      document.getElementById("selectedCount").textContent = String(selectedTeams.length);
+      document.getElementById("scoreTotal").textContent = String(currentScore());
+      document.getElementById("progressLabel").textContent = `${selectedTeams.length} of 15 selected`;
+      document.getElementById("progressFill").style.width = `${(selectedTeams.length / 15) * 100}%`;
+
+      const nextIndex = buckets.findIndex((bucket) => getBucketCount(bucket.id) < bucket.required);
+      const nextHint = nextIndex === -1
+        ? "Draft complete. Save this entry to add it to the standings."
+        : `Next up: ${buckets[nextIndex].label}.`;
+      document.getElementById("nextStepHint").textContent = nextHint;
+      document.getElementById("entryName").value = state.entrantName;
+
+      const pickList = document.getElementById("pickList");
+      pickList.innerHTML = "";
+
+      if (!selectedTeams.length) {
+        pickList.innerHTML = `<div class="empty-state">No teams drafted yet. Start with a No. 1 seed.</div>`;
+      } else {
+        selectedTeams
+          .sort((a, b) => a.seed - b.seed || a.region.localeCompare(b.region))
+          .forEach((team) => {
+            const wins = winsMap[team.id] || 0;
+            const points = scoringByWin.slice(0, wins).reduce((sum, value) => sum + value, 0);
+            const card = document.createElement("div");
+            card.className = "pick-card";
+            card.innerHTML = `
+              <div class="pick-card-top">
+                <div>
+                  <strong>${team.team}</strong>
+                  <div class="subtle">No. ${team.seed} • ${team.region} • ${team.side} side</div>
+                </div>
+                <button type="button" data-remove="${team.id}">Remove</button>
+              </div>
+              <div class="score-row">
+                <div>
+                  <label>Live results</label>
+                  <div class="subtle">${wins} tournament win${wins === 1 ? "" : "s"} recorded</div>
+                </div>
+                <span class="score-pill">${points} pts</span>
+              </div>
+            `;
+            card.querySelector("button").addEventListener("click", () => removeTeam(team.id));
+            pickList.appendChild(card);
+          });
+      }
+
+      renderSavedEntries(winsMap);
+      renderStandings(winsMap);
+      renderResults();
+      renderBalance();
+      renderBracket();
+    }
+
+    function renderSavedEntries(winsMap) {
+      const savedEntries = document.getElementById("savedEntries");
+      savedEntries.innerHTML = "";
+
+      if (!state.entries.length) {
+        savedEntries.innerHTML = `<div class="empty-state">No submitted entries yet. Save the current 15-team group to start the pool.</div>`;
+        return;
+      }
+
+      state.entries.forEach((entry) => {
+        const score = calculateScore(entry.teams, winsMap);
+        const row = document.createElement("div");
+        row.className = "saved-row";
+        row.innerHTML = `
+          <div>
+            <strong>${entry.name}</strong>
+            <div class="subtle">${entry.teams.length} teams saved</div>
+          </div>
+          <div class="standing-score">${score}</div>
+          <button type="button">Delete</button>
+        `;
+        row.querySelector("button").addEventListener("click", () => deleteEntry(entry.id));
+        savedEntries.appendChild(row);
+      });
+    }
+
+    function renderStandings(winsMap) {
+      const standingsList = document.getElementById("standingsList");
+      standingsList.innerHTML = "";
+
+      if (!state.entries.length) {
+        standingsList.innerHTML = `<div class="empty-state">Standings appear after at least one entrant saves a bracket.</div>`;
+        return;
+      }
+
+      const rankedEntries = [...state.entries]
+        .map((entry) => ({
+          ...entry,
+          score: calculateScore(entry.teams, winsMap)
+        }))
+        .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
+
+      rankedEntries.forEach((entry, index) => {
+        const row = document.createElement("div");
+        row.className = "standing-row";
+        row.innerHTML = `
+          <span class="standing-rank">${index + 1}</span>
+          <div>
+            <strong>${entry.name}</strong>
+            <div class="subtle">${entry.teams.length} drafted teams</div>
+          </div>
+          <div class="standing-score">${entry.score}</div>
+        `;
+        standingsList.appendChild(row);
+      });
+    }
+
+    function renderBalance() {
+      const selectedTeams = state.selected.map((id) => teamMap.get(id));
+      const leftCount = selectedTeams.filter((team) => team.side === "Left").length;
+      const rightCount = selectedTeams.filter((team) => team.side === "Right").length;
+      document.getElementById("leftCount").textContent = String(leftCount);
+      document.getElementById("rightCount").textContent = String(rightCount);
+
+      const alert = document.getElementById("balanceAlert");
+      const diff = Math.abs(leftCount - rightCount);
+      if (!selectedTeams.length) {
+        alert.className = "alert good";
+        alert.textContent = "Balanced start. Add picks to compare both sides.";
+      } else if (diff >= 5) {
+        alert.className = "alert";
+        alert.textContent = leftCount > rightCount
+          ? "Heavy left-side stack. Your picks are concentrated in the South/West half of the bracket."
+          : "Heavy right-side stack. Your picks are concentrated in the Midwest/East half of the bracket.";
+      } else if (diff >= 3) {
+        alert.className = "alert";
+        alert.textContent = leftCount > rightCount
+          ? "Noticeable lean to the left side. Consider adding Midwest or East teams."
+          : "Noticeable lean to the right side. Consider adding South or West teams.";
+      } else {
+        alert.className = "alert good";
+        alert.textContent = "Nice spread. Your draft is reasonably balanced across both sides.";
+      }
+
+      const regionCounts = regionOrder.map((region) => ({
+        region,
+        count: selectedTeams.filter((team) => team.region === region).length
+      }));
+      const distribution = document.getElementById("regionDistribution");
+      distribution.innerHTML = "";
+      regionCounts.forEach((item) => {
+        const div = document.createElement("div");
+        div.className = "region-chip";
+        div.innerHTML = `<span>${item.region}</span><strong>${item.count}</strong>`;
+        distribution.appendChild(div);
+      });
+    }
+
+    function renderBracket() {
+      const bracket = document.getElementById("bracketLayout");
+      bracket.innerHTML = "";
+      regionOrder.forEach((region) => {
+        const regionCard = document.createElement("section");
+        regionCard.className = "region-card";
+        regionCard.dataset.region = region;
+        regionCard.innerHTML = `<h3>${region}</h3><div class="seed-list"></div>`;
+        const seedList = regionCard.querySelector(".seed-list");
+
+        teams
+          .filter((team) => team.region === region)
+          .sort((a, b) => a.seed - b.seed)
+          .forEach((team) => {
+            const selected = state.selected.includes(team.id);
+            const entry = document.createElement("div");
+            entry.className = `seed-entry${selected ? " selected" : ""}`;
+            entry.innerHTML = `
+              <span class="seed-number">${team.seed}</span>
+              <span>${team.team}</span>
+              <span class="slot-side">${team.side}</span>
+            `;
+            seedList.appendChild(entry);
+          });
+
+        bracket.appendChild(regionCard);
+      });
+    }
+
+    function renderResults() {
+      const winnerMap = getWinnerMap();
+      const resultsGrid = document.getElementById("resultsGrid");
+      resultsGrid.innerHTML = "";
+
+      roundLabels.forEach((roundLabel, roundIndex) => {
+        const column = document.createElement("section");
+        column.className = "round-column";
+        column.innerHTML = `<h3>${roundLabel}</h3>`;
+
+        gamesByRound[roundIndex].forEach((game) => {
+          const card = document.createElement("div");
+          card.className = "game-card";
+          const options = getGameOptions(game, winnerMap);
+          const selectedWinner = state.results[game.id] || "";
+
+          const labelParts = [game.label, game.bracketLabel].filter(Boolean).join(" • ");
+          card.innerHTML = `
+            <div>
+              <strong>${game.region || "National"}</strong>
+              <div class="game-meta">${labelParts}</div>
+            </div>
+          `;
+
+          if (!options.length) {
+            const note = document.createElement("div");
+            note.className = "locked-note";
+            note.textContent = "Pick earlier winners first to unlock this game.";
+            card.appendChild(note);
+          } else {
+            const select = document.createElement("select");
+            select.innerHTML = `<option value="">Select winner</option>`;
+            options.forEach((team) => {
+              const option = document.createElement("option");
+              option.value = team.id;
+              option.textContent = `${team.team} (${team.seed})`;
+              select.appendChild(option);
+            });
+            select.value = selectedWinner;
+            select.addEventListener("change", (event) => updateResult(game.id, event.target.value));
+            card.appendChild(select);
+          }
+
+          column.appendChild(card);
+        });
+
+        resultsGrid.appendChild(column);
+      });
+    }
+
+    function render() {
+      renderBuckets();
+      renderSummary();
+    }
+
+    document.getElementById("resetDraft").addEventListener("click", () => {
+      state.selected = [];
+      state.entrantName = "";
+      render();
+    });
+
+    document.getElementById("entryName").addEventListener("input", (event) => {
+      state.entrantName = event.target.value;
+    });
+
+    document.getElementById("saveEntry").addEventListener("click", saveEntry);
+    document.getElementById("clearResults").addEventListener("click", clearResults);
+
+    render();
+  </script>
+</body>
+</html>
