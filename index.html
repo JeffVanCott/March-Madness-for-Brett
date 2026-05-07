@@ -35,6 +35,7 @@
       min-height: 100vh;
       color: var(--ink);
       font-family: var(--font-body);
+      overflow-x: hidden;
       background:
         radial-gradient(circle at top left, rgba(239, 108, 26, 0.22), transparent 22%),
         radial-gradient(circle at top right, rgba(176, 95, 39, 0.18), transparent 20%),
@@ -651,8 +652,50 @@
       min-width: 210px;
     }
 
-    .round-column h3 {
+    .round-toggle {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.92);
+      color: var(--ink);
+      cursor: pointer;
+      font: inherit;
+      text-align: left;
+    }
+
+    .round-toggle h3 {
+      margin: 0;
       font-size: 1rem;
+      font-family: var(--font-display);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .round-toggle-meta {
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .round-chevron {
+      font-size: 1.2rem;
+      color: var(--accent-deep);
+      transition: transform 160ms ease;
+    }
+
+    .round-column.is-collapsed .round-chevron {
+      transform: rotate(-90deg);
+    }
+
+    .round-games {
+      display: grid;
+      gap: 12px;
     }
 
     .game-card {
@@ -718,12 +761,58 @@
         grid-template-columns: 1fr;
       }
 
+      .round-grid {
+        grid-template-columns: 1fr;
+        overflow-x: visible;
+      }
+
+      .round-column {
+        min-width: 0;
+      }
+
+      .round-column.is-collapsed .round-games {
+        display: none;
+      }
+
       .bucket-header,
       .panel-head,
       .pick-card-top,
-      .score-row {
+      .score-row,
+      .standing-row,
+      .saved-row {
         grid-template-columns: 1fr;
         display: grid;
+      }
+
+      .standing-rank {
+        width: 34px;
+        height: 34px;
+      }
+    }
+
+    @media (max-width: 540px) {
+      h1 {
+        max-width: none;
+        font-size: clamp(2rem, 10vw, 2.9rem);
+      }
+
+      .hero p {
+        font-size: 0.95rem;
+      }
+
+      .stat-card strong,
+      .summary-card strong,
+      .balance-card strong,
+      .standing-score {
+        font-size: 1.25rem;
+      }
+
+      .seed-entry {
+        grid-template-columns: auto 1fr;
+      }
+
+      .slot-side {
+        grid-column: 2;
       }
     }
   </style>
@@ -979,7 +1068,8 @@
       selected: [],
       entrantName: "",
       entries: loadFromStorage(storageKeys.entries, []),
-      results: loadFromStorage(storageKeys.results, {})
+      results: loadFromStorage(storageKeys.results, {}),
+      collapsedRounds: {}
     };
 
     function loadFromStorage(key, fallback) {
@@ -1228,6 +1318,23 @@
       renderSummary();
     }
 
+    function isMobileViewport() {
+      return window.matchMedia("(max-width: 720px)").matches;
+    }
+
+    function isRoundCollapsed(roundIndex) {
+      if (state.collapsedRounds[roundIndex] !== undefined) {
+        return state.collapsedRounds[roundIndex];
+      }
+
+      return isMobileViewport() ? roundIndex !== 0 : false;
+    }
+
+    function toggleRound(roundIndex) {
+      state.collapsedRounds[roundIndex] = !isRoundCollapsed(roundIndex);
+      renderResults();
+    }
+
     function renderBuckets() {
       const bucketList = document.getElementById("bucketList");
       const currentIndex = activeBucketIndex();
@@ -1469,8 +1576,20 @@
 
       roundLabels.forEach((roundLabel, roundIndex) => {
         const column = document.createElement("section");
-        column.className = "round-column";
-        column.innerHTML = `<h3>${roundLabel}</h3>`;
+        const collapsed = isRoundCollapsed(roundIndex);
+        column.className = `round-column${collapsed ? " is-collapsed" : ""}`;
+        column.innerHTML = `
+          <button class="round-toggle" type="button" aria-expanded="${collapsed ? "false" : "true"}">
+            <div>
+              <h3>${roundLabel}</h3>
+              <div class="round-toggle-meta">${gamesByRound[roundIndex].length} games</div>
+            </div>
+            <span class="round-chevron">▾</span>
+          </button>
+          <div class="round-games"></div>
+        `;
+        column.querySelector(".round-toggle").addEventListener("click", () => toggleRound(roundIndex));
+        const gamesContainer = column.querySelector(".round-games");
 
         gamesByRound[roundIndex].forEach((game) => {
           const card = document.createElement("div");
@@ -1505,7 +1624,7 @@
             card.appendChild(select);
           }
 
-          column.appendChild(card);
+          gamesContainer.appendChild(card);
         });
 
         resultsGrid.appendChild(column);
